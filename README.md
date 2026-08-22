@@ -30,6 +30,23 @@ DATABASE_URL=postgresql://user:password@db.supabase.co:5432/postgres
 SECRET_KEY=your-jwt-secret-key
 GROQ_API_KEY=your-groq-api-key
 ```
+## Sample Credentials
+
+Admin
+Email: admin@ashcare.com
+Password: admin123
+
+Doctor
+Email: doctor@ashcare.com
+Password: doctor123
+Email: paul@ashcare.com
+Password: doctor456
+
+Patient
+Email: user1@gmail.com
+Password: user@123
+
+#### You cam create your Own credentials and real emails for email notification and calenders 
 
 ## DB Schema (SQLModel / PostgreSQL)
 - **User**: `id`, `email`, `full_name`, `hashed_password`, `role` (ADMIN, DOCTOR, PATIENT)
@@ -38,15 +55,7 @@ GROQ_API_KEY=your-groq-api-key
 - **Appointment**: `id`, `patient_id`, `doctor_id`, `start_time`, `end_time`, `status` (HOLD, PENDING, CONFIRMED, CANCELLED, COMPLETED), `hold_expires_at`
 - **ConsultationNote**: `id`, `appointment_id`, `symptoms`, `pre_visit_summary`, `urgency_level`, `suggested_questions`, `post_visit_notes`, `prescription`, `post_visit_summary`
 
-## LLM Prompts Used
-**Pre-visit summary (Groq Mixtral):**
-```
-Analyse these symptoms and return: urgency level (Low / Medium / High), chief complaint, and three suggested questions for the doctor. Symptoms: {symptoms}
-```
-**Post-visit summary (Groq Mixtral):**
-```
-Convert these clinical notes into a patient-friendly summary with medication schedule and follow-up steps: {notes}
-```
+
 
 ## Google Calendar Setup Steps (Conceptual)
 1. Go to Google Cloud Console, create a new project.
