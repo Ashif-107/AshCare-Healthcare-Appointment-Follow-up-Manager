@@ -35,7 +35,7 @@ def generate_pre_visit_summary(symptoms: str) -> dict:
                     "content": prompt,
                 }
             ],
-            model="mixtral-8x7b-32768",
+            model="openai/gpt-oss-20b",
         )
         response_text = chat_completion.choices[0].message.content
         
@@ -73,7 +73,7 @@ def generate_post_visit_summary(notes: str) -> str:
                     "content": prompt,
                 }
             ],
-            model="mixtral-8x7b-32768",
+            model="openai/gpt-oss-20b",
         )
         return chat_completion.choices[0].message.content
     except Exception as e:

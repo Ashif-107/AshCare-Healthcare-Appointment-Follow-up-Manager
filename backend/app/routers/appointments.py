@@ -121,3 +121,27 @@ def submit_post_visit(appointment_id: int, req: PostVisitRequest, session: Sessi
     session.commit()
     
     return {"message": "Post-visit notes saved", "patient_friendly_summary": patient_friendly_summary}
+
+@router.get("/doctor/{doctor_id}")
+def get_doctor_appointments(doctor_id: int, session: Session = Depends(get_session)):
+    # Fetch CONFIRMED appointments for the doctor
+    appts = session.exec(
+        select(Appointment).where(
+            Appointment.doctor_id == doctor_id,
+            Appointment.status == AppointmentStatus.CONFIRMED
+        )
+    ).all()
+    
+    results = []
+    for appt in appts:
+        consultation = session.exec(select(ConsultationNote).where(ConsultationNote.appointment_id == appt.id)).first()
+        results.append({
+            "appointment_id": appt.id,
+            "patient_id": appt.patient_id,
+            "start_time": appt.start_time,
+            "end_time": appt.end_time,
+            "symptoms": consultation.symptoms if consultation else "",
+            "pre_visit_summary": consultation.pre_visit_summary if consultation else "",
+            "urgency_level": consultation.urgency_level if consultation else ""
+        })
+    return results
