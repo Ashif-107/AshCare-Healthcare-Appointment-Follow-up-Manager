@@ -7,7 +7,7 @@ app = FastAPI(title="Healthcare Appointment API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # For dev purposes
+    allow_origins=["http://localhost:3000", "https://ashcare.vercel.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
