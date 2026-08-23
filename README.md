@@ -58,15 +58,6 @@ Password: user@123
 - **ConsultationNote**: `id`, `appointment_id`, `symptoms`, `pre_visit_summary`, `urgency_level`, `suggested_questions`, `post_visit_notes`, `prescription`, `post_visit_summary`
 
 
-
-## Google Calendar Setup Steps (Conceptual)
-1. Go to Google Cloud Console, create a new project.
-2. Enable the Google Calendar API.
-3. Set up OAuth consent screen and create OAuth 2.0 Client IDs.
-4. Download the `credentials.json` file and place it in the backend root.
-5. Use `google-auth-oauthlib` in Python to handle the OAuth flow and store the `token.json`.
-6. Use the `google-api-python-client` to create/delete events via `service.events().insert()` or `.delete()`.
-
 ---
 
 # System Design Write-up
@@ -83,5 +74,10 @@ When an admin or doctor marks a leave day via the `/admin/leaves` API, the syste
 The system then iterates through these affected appointments, updating their status to `CANCELLED_DUE_TO_LEAVE`. To ensure patients are promptly informed, the backend uses FastAPI's `BackgroundTasks` to queue notification jobs. These background jobs handle dispatching cancellation emails and invoking the Google Calendar API to delete the previously scheduled events, ensuring the main HTTP request remains fast and responsive.
 
 ### Notification Failure Handling
-Relying on external services for email (SendGrid) and calendar integration introduces the risk of network failures or API rate limits. To handle this reliably, the background jobs should be upgraded to use a persistent task queue like Celery or RQ backed by Redis.
+Relying on external services for email and calendar integration introduces the risk of network failures or API rate limits. To handle this reliably, the background jobs should be upgraded to use a persistent task queue like Celery or RQ backed by Redis.
 When an email or calendar API call fails, the task runner catches the exception and schedules a retry with exponential backoff. For critical failures that exceed the maximum retry count, the failure is logged into a dedicated `NotificationLog` table in the database with a status of `FAILED`. An admin dashboard or a cron job can then monitor these failed logs and either alert the system administrator or allow manual re-triggering of the notifications, ensuring that no patient misses a vital appointment update due to transient external errors.
+
+### Real Email & Google Calendar API Integrations
+The application goes beyond mock notifications by directly integrating with real third-party APIs asynchronously via FastAPI's `BackgroundTasks`. 
+- **Email Notifications**: Powered by Python's `smtplib` and `email.mime`, the backend establishes a secure TLS connection to `smtp.gmail.com` to dispatch HTML-formatted booking confirmations and cancellation notices to any email address.
+- **Google Calendar API**: Using the `google-api-python-client` and OAuth 2.0, the backend communicates with the Google Calendar API. Upon a confirmed booking, the system creates a calendar event, provisions a live Google Meet link, and automatically invites both the doctor and the patient. If an appointment is cancelled (e.g., due to a doctor's leave), the backend dynamically queries and deletes the corresponding calendar event.

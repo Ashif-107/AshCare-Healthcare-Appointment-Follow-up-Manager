@@ -21,7 +21,7 @@ The backend is modularized to keep the code clean. The entry point is `backend/a
 | `app/models.py` | Defines the database tables and relationships (Schema). |
 | `app/dependencies.py` | Contains security functions (like `get_current_user` and `get_admin_user`) that protect endpoints. |
 | `app/services/llm.py` | Handles all communication with the Groq API. |
-| `app/services/notifications.py` | Handles background tasks (like sending mock emails when an appointment is booked or cancelled). |
+| `app/services/notifications.py` | Handles real background tasks including Gmail SMTP email dispatch and Google Calendar event creation/deletion using OAuth 2.0. |
 
 ### The API Routers (The Endpoints)
 Instead of putting all APIs in one file, they are split by feature into the `app/routers/` folder:
@@ -58,7 +58,7 @@ Here is exactly how the frontend and backend talk to each other during major act
     *   **Data Flow to AI:** Calls `generate_pre_visit_summary(symptoms)` from `services/llm.py`.
     *   `llm.py` sends the symptoms to **Groq**. Groq returns the Urgency Level and Chief Complaint.
     *   **Database Write:** Saves the symptoms and the Groq-generated summary into the `ConsultationNote` table.
-    *   **Background Task:** Tells FastAPI to run `send_confirmation_email()` in the background so the API can respond to the user instantly without waiting for an email server.
+    *   **Background Task:** Tells FastAPI to run `send_booking_email()` and `create_calendar_event()` in the background. The API responds to the user instantly, while the backend securely connects to Gmail SMTP to send HTML emails and uses Google OAuth to invite users to a Google Meet calendar event.
 5.  **Frontend:** Receives a success message and shows it to the patient.
 
 ### C. The Doctor Post-Visit Flow (With LLM)
