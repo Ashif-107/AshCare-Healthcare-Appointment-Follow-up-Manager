@@ -20,12 +20,19 @@ Shows the administrative interface for managing doctor accounts and registering 
 
 ![Admin Dashboard](./project_ss/admin%20dashboard.png)
 
-## 4. Real Email & Calendar Integrations
-Demonstrates the working integration with Gmail SMTP and the Google Calendar API, including automated Google Meet links.
+## 4. Real Email Confirmations
+Demonstrates the working integration with Gmail SMTP and automated mails for confirmation 
+
+Cancellation mails arrives upon approving leave for Doctors (appointments clashing with leave date will be cancelled)
 
 ![Email Confirmation](./project_ss/appointment%20confirmation.png)
 
 ![Appointment Cancellation](./project_ss/appointment%20cancellation.png)
 
+## 5. Real Google Calendar Mails
+
+Shows the email that has Google Calendar Invitation. Will automatically add to calender in subsequent appointments
+
+working with Google Calendar API, including automated Google Meet links.
 ![Google Calendar Invite](./project_ss/calender%20invitation%200.png)
 ![Google Calendar Invite](./project_ss/calender%20invitation.png)
