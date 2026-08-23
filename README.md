@@ -2,6 +2,11 @@
 
 A full-stack application built with Next.js (Frontend) and FastAPI (Backend) to manage healthcare appointments, AI-generated summaries, and doctor leaves.
 
+## Documentation
+
+- [DB Schema Represenation](DB_SCHEMA.md)
+- [System Architecture Documentation](ARCHITECTURE.md)
+
 ## Setup Guide
 
 ### Prerequisites
@@ -24,6 +29,13 @@ A full-stack application built with Next.js (Frontend) and FastAPI (Backend) to 
 3. Run the development server: `npm run dev`
 4. Open `http://localhost:3000` in your browser.
 
+### External APIs Setup (Email & Calendar)
+To enable real email notifications and Google Calendar event creation:
+1. **Gmail Setup**: Go to your Google Account > Security. Enable 2-Step Verification, and generate an "App Password".
+2. **Calendar Setup**: Go to the Google Cloud Console, create a Project, and enable the **Google Calendar API**.
+3. Go to Credentials, create an OAuth 2.0 Client ID (Desktop App), download the JSON file, rename it to `credentials.json`, and place it in the `backend/` directory.
+4. Fill in `GMAIL_ADDRESS` and `GMAIL_APP_PASSWORD` in your `backend/.env`.
+
 ## .env.example
 ```
 DATABASE_URL=postgresql://user:password@db.supabase.co:5432/postgres
@@ -41,6 +53,7 @@ Password: admin123
 Doctor
 Email: doctor@ashcare.com
 Password: doctor123
+<br>
 Email: paul@ashcare.com
 Password: doctor456
 
@@ -48,7 +61,7 @@ Patient
 Email: user1@gmail.com
 Password: user@123
 
-#### You cam create your Own credentials and real emails for email notification and calenders 
+#### You can create your Own credentials and real emails for email notification and calenders 
 
 ## DB Schema (SQLModel / PostgreSQL)
 - **User**: `id`, `email`, `full_name`, `hashed_password`, `role` (ADMIN, DOCTOR, PATIENT)
@@ -63,19 +76,29 @@ Password: user@123
 # System Design Write-up
 
 ### Double-Booking Prevention
-Double-booking is prevented using database transaction-level checks during the slot hold and booking process. When a patient attempts to book a slot, the system queries the `Appointment` table for any records with the same `doctor_id` and `start_time` that have a status of `CONFIRMED` or an active `HOLD`. If a conflict is found, a `409 Conflict` response is returned. In a production environment with high concurrency, this is further reinforced by applying a unique compound constraint in PostgreSQL on `(doctor_id, start_time)` filtered by active statuses, or by using pessimistic locking (`SELECT ... FOR UPDATE`) when acquiring a slot.
+- **Database Transaction Checks:** During the slot hold and booking process, the system queries the `Appointment` table for any records with the same `doctor_id` and `start_time` that have a status of `CONFIRMED` or an active `HOLD`. 
+- **Conflict Response:** If a conflict is found, a `409 Conflict` response is returned. 
+- **Production Reinforcement:** In a high-concurrency environment, this is reinforced by applying a unique compound constraint in PostgreSQL on `(doctor_id, start_time)` filtered by active statuses, or by using pessimistic locking (`SELECT ... FOR UPDATE`) when acquiring a slot.
 
 ### Slot Hold Mechanism
-To handle simultaneous booking attempts gracefully, a "Slot Hold" mechanism is implemented. When a patient selects a time slot and begins filling out their symptoms, the frontend calls the `/appointments/hold` endpoint. This creates an `Appointment` record with a `HOLD` status and a `hold_expires_at` timestamp set to 5 minutes in the future. 
-While this hold is active, other users querying available slots will not see this time slot. If the patient completes the booking before expiration, the status changes to `CONFIRMED`. If they abandon the flow, the hold expires natively. The slot fetching API dynamically filters out `HOLD` records where `hold_expires_at` is in the past, effectively releasing the slot without requiring an active cleanup daemon, though a background job could periodically purge expired holds to save DB space.
+- **Simultaneous Booking Handling:** To handle simultaneous booking attempts gracefully, a "Slot Hold" mechanism is implemented. 
+- **Temporary Hold Creation:** When a patient selects a time slot and begins filling out their symptoms, the frontend calls the `/appointments/hold` endpoint. This creates an `Appointment` record with a `HOLD` status and a `hold_expires_at` timestamp set to 5 minutes in the future. 
+- **Slot Visibility:** While this hold is active, other users querying available slots will not see this time slot. 
+- **Hold Expiration:** If the patient completes the booking before expiration, the status changes to `CONFIRMED`. If they abandon the flow, the hold expires natively. 
+- **Dynamic Filtering:** The slot fetching API dynamically filters out `HOLD` records where `hold_expires_at` is in the past, effectively releasing the slot without requiring an active cleanup daemon.
 
 ### Doctor Leave Conflict Handling
-When an admin or doctor marks a leave day via the `/admin/leaves` API, the system executes a multi-step conflict resolution process within a single database transaction. First, it verifies the doctor isn't already on leave. Second, it inserts the `Leave` record. Third, it queries all `CONFIRMED` appointments for that specific doctor that fall on the leave date.
-The system then iterates through these affected appointments, updating their status to `CANCELLED_DUE_TO_LEAVE`. To ensure patients are promptly informed, the backend uses FastAPI's `BackgroundTasks` to queue notification jobs. These background jobs handle dispatching cancellation emails and invoking the Google Calendar API to delete the previously scheduled events, ensuring the main HTTP request remains fast and responsive.
+- **Multi-step Conflict Resolution:** When an admin or doctor marks a leave day via the `/admin/leaves` API, the system executes a resolution process within a single database transaction. 
+- **Verification and Insertion:** It verifies the doctor isn't already on leave, inserts the `Leave` record, and queries all `CONFIRMED` appointments for that specific doctor on the leave date.
+- **Status Updates:** The system iterates through these affected appointments, updating their status to `CANCELLED_DUE_TO_LEAVE`. 
+- **Background Notifications:** To ensure patients are promptly informed, the backend uses FastAPI's `BackgroundTasks` to queue notification jobs. These jobs handle dispatching cancellation emails and invoking the Google Calendar API to delete the previously scheduled events.
 
 ### Notification Failure Handling
-Relying on external services for email and calendar integration introduces the risk of network failures or API rate limits. To handle this reliably, the background jobs should be upgraded to use a persistent task queue like Celery or RQ backed by Redis.
-When an email or calendar API call fails, the task runner catches the exception and schedules a retry with exponential backoff. For critical failures that exceed the maximum retry count, the failure is logged into a dedicated `NotificationLog` table in the database with a status of `FAILED`. An admin dashboard or a cron job can then monitor these failed logs and either alert the system administrator or allow manual re-triggering of the notifications, ensuring that no patient misses a vital appointment update due to transient external errors.
+- **Risk Mitigation:** Relying on external services introduces the risk of network failures or API rate limits. 
+- **Persistent Task Queue:** To handle this reliably, the background jobs should be upgraded to use a persistent task queue like Celery or RQ backed by Redis.
+- **Retry Mechanism:** When an email or calendar API call fails, the task runner catches the exception and schedules a retry with exponential backoff. 
+- **Failure Logging:** For critical failures that exceed the maximum retry count, the failure is logged into a dedicated `NotificationLog` table with a status of `FAILED`. 
+- **System Monitoring:** An admin dashboard or cron job can monitor these failed logs to alert the administrator or allow manual re-triggering of notifications.
 
 ### Real Email & Google Calendar API Integrations
 The application goes beyond mock notifications by directly integrating with real third-party APIs asynchronously via FastAPI's `BackgroundTasks`. 

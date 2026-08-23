@@ -1,10 +1,12 @@
 # Environment Variables
 .env
 .env.local
-.env.*
 backend/.env
 backend/credentials.json
 frontend/.env.local
+
+
+.gitignore
 
 # Node.js / Next.js
 node_modules/

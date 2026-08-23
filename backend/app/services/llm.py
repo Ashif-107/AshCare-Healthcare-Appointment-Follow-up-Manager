@@ -26,7 +26,7 @@ def generate_pre_visit_summary(symptoms: str) -> dict:
             "full_summary": "[MOCK] AI Pre-visit Summary: The patient reported: " + symptoms
         }
     
-    prompt = f"Analyse these symptoms and return: urgency level (Low / Medium / High), chief complaint, and three suggested questions for the doctor. Symptoms: {symptoms}"
+    prompt = f"Analyse these symptoms and return: urgency level (Low / Medium / High), chief complaint, and three suggested questions for the doctor to ask the patient during the consultation. Format as a clinical pre-visit brief. Symptoms: {symptoms}"
     try:
         chat_completion = client.chat.completions.create(
             messages=[
