@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function PatientBooking() {
   const [doctors, setDoctors] = useState([]);
@@ -79,8 +80,13 @@ export default function PatientBooking() {
     <div className="min-h-screen bg-gray-50 p-8 text-gray-800">
       <div className="max-w-5xl mx-auto space-y-8">
         <div className="flex justify-between items-end">
-          <h1 className="text-4xl font-bold text-blue-800">Book an Appointment</h1>
-          <p className="text-lg font-medium text-gray-600">Welcome, {userName}</p>
+          <div>
+            <h1 className="text-4xl font-bold text-blue-800">Book an Appointment</h1>
+            <p className="text-lg font-medium text-gray-600 mt-1">Welcome, {userName}</p>
+          </div>
+          <Link href="/patient/dashboard" className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-xl transition shadow">
+            Back to Dashboard
+          </Link>
         </div>
         
         {message && <div className="p-4 bg-blue-100 text-blue-800 rounded-xl">{message}</div>}

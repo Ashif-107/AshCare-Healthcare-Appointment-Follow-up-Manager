@@ -145,3 +145,32 @@ def get_doctor_appointments(doctor_id: int, session: Session = Depends(get_sessi
             "urgency_level": consultation.urgency_level if consultation else ""
         })
     return results
+
+@router.get("/patient/{patient_id}")
+def get_patient_appointments(patient_id: int, session: Session = Depends(get_session)):
+    # Fetch CONFIRMED and COMPLETED appointments for the patient
+    appts = session.exec(
+        select(Appointment).where(
+            Appointment.patient_id == patient_id,
+            Appointment.status.in_([AppointmentStatus.CONFIRMED, AppointmentStatus.COMPLETED])
+        ).order_by(Appointment.start_time.desc())
+    ).all()
+    
+    results = []
+    for appt in appts:
+        consultation = session.exec(select(ConsultationNote).where(ConsultationNote.appointment_id == appt.id)).first()
+        doctor = session.get(User, appt.doctor_id)
+        doctor_name = doctor.full_name if doctor else "Unknown Doctor"
+        
+        results.append({
+            "appointment_id": appt.id,
+            "doctor_name": doctor_name,
+            "start_time": appt.start_time,
+            "end_time": appt.end_time,
+            "status": appt.status,
+            "symptoms": consultation.symptoms if consultation else "",
+            "post_visit_notes": consultation.post_visit_notes if consultation else "",
+            "prescription": consultation.prescription if consultation else "",
+            "post_visit_summary": consultation.post_visit_summary if consultation else ""
+        })
+    return results

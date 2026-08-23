@@ -28,7 +28,7 @@ export default function Login() {
       localStorage.setItem("userId", data.id);
       localStorage.setItem("fullName", data.full_name);
       
-      if (data.role === "PATIENT") router.push("/patient/book");
+      if (data.role === "PATIENT") router.push("/patient/dashboard");
       else if (data.role === "DOCTOR") router.push("/doctor/dashboard");
       else if (data.role === "ADMIN") router.push("/admin/dashboard");
       
