@@ -29,6 +29,8 @@ A full-stack application built with Next.js (Frontend) and FastAPI (Backend) to 
 DATABASE_URL=postgresql://user:password@db.supabase.co:5432/postgres
 SECRET_KEY=your-jwt-secret-key
 GROQ_API_KEY=your-groq-api-key
+GMAIL_ADDRESS=your.email@gmail.com
+GMAIL_APP_PASSWORD=your16charpassword
 ```
 ## Sample Credentials
 

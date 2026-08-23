@@ -3,6 +3,7 @@
 .env.local
 .env.*
 backend/.env
+backend/credentials.json
 frontend/.env.local
 
 # Node.js / Next.js
