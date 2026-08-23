@@ -4,6 +4,7 @@ A full-stack application built with Next.js (Frontend) and FastAPI (Backend) to 
 
 ## Documentation
 
+- [Application Screenshots](SCREENSHOTS.md)
 - [DB Schema Represenation](DB_SCHEMA.md)
 - [System Architecture Documentation](ARCHITECTURE.md)
 
